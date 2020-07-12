@@ -1,0 +1,98 @@
+{
+	"info": {
+		"_postman_id": "5e832031-4826-40b4-b436-c2bec8ca5283",
+		"name": "holbox",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "ARTICLES",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/articles",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"articles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FIND ARTICLE",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/article?id=5f0b94555e838bb85f5c672a",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"article"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "5f0b94555e838bb85f5c672a"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT ARTICLE",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "este es el markdown 234"
+				},
+				"url": {
+					"raw": "localhost:5000/article",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"article"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE ARTICLE",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/article?id=5f0b946f2e33235ae34d5a9b",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"article"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "5f0b946f2e33235ae34d5a9b"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
