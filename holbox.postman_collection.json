@@ -29,7 +29,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:5000/article?id=5f0b94555e838bb85f5c672a",
+					"raw": "localhost:5000/article?id=5f0bc40933e4eb01b50399cb",
 					"host": [
 						"localhost"
 					],
@@ -40,7 +40,7 @@
 					"query": [
 						{
 							"key": "id",
-							"value": "5f0b94555e838bb85f5c672a"
+							"value": "5f0bc40933e4eb01b50399cb"
 						}
 					]
 				}
@@ -88,6 +88,75 @@
 							"key": "id",
 							"value": "5f0b946f2e33235ae34d5a9b"
 						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEWS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/news",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"news"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UPDATE ARTICLE (REPLACE)",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"markdown\":\"MD\",\r\n    \"title\": \"titulo\",\r\n    \"category\": \"news\",\r\n    \"tags\": [ \"tag1\", \"tag2\", \"tag3\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:5000/article?id=5f0bc39c33e4eb01b50399c9",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"article"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "5f0bc39c33e4eb01b50399c9"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CLEAR ALL ARTICLES",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/clear_all_articles",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"clear_all_articles"
 					]
 				}
 			},
