@@ -28,19 +28,20 @@ client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['holbox_database']
 articles_collection = db['articles_collection']
 
+
 @app.route('/articles')
 def articles():
-    p = articles_collection.find()
+    category = request.args.get('category')
+    if category:
+        p = articles_collection.find({"category": category})
+    else:
+        p = articles_collection.find()
     return json_util.dumps(p), 200, JSON_HEADER
 
-#{
-#    "markdown":"este es el markdown 234",
-#    "title": "titulo",
-#    "category": "categoria", 
-#    "tags": [ "tag1", "tag2", "tag3"]
-#}
+
 def isValidArticle(a):
     return a[MARKDOWN] and a[TITLE] and a[CATEGORY] and a[TAGS]
+
 
 @app.route('/article', methods=['GET','POST','DELETE','PUT'])
 def article_by_id():
@@ -81,35 +82,12 @@ def article_by_id():
         return article, 200, JSON_HEADER
 
 
-@app.route('/news')
-def get_news():
-    p = articles_collection.find({"category": "news"})
-    return json_util.dumps(p), 200, JSON_HEADER
-
-@app.route('/tips')
-def get_tips():
-    p = articles_collection.find({"category": "tips"})
-    return json_util.dumps(p), 200, JSON_HEADER
-
-@app.route('/gallery')
-def get_gallery():
-    p = articles_collection.find({"category": "gallery"})
-    return json_util.dumps(p), 200, JSON_HEADER
-
-@app.route('/destinies')
-def get_destinies():
-    p = articles_collection.find({"category": "destinies"})
-    return json_util.dumps(p), 200, JSON_HEADER
-
-@app.route('/experiences')
-def get_experiences():
-    p = articles_collection.find({"category": "experiences"})
-    return json_util.dumps(p), 200, JSON_HEADER
-
-
-@app.route('/clear_all_articles',methods=['DELETE'])
+@app.route('/reload_from_mock',methods=['POST'])
 def clear_all_articles():
     db.drop_collection(articles_collection)
+    with open('mocked_articles.json') as json_file:
+        articles = json.load(json_file)
+        articles_collection.insert_many(articles)
     return '', 200
 
 
