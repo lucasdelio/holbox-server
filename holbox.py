@@ -25,7 +25,8 @@ key = os.environ['KEY'] #read the key from environment variable
 ferne = Fernet(key)     #initialize fernet with the key
 
 client = pymongo.MongoClient('mongodb://localhost:27017/')
-articles_collection = client.holbox_database.articles_collection
+db = client['holbox_database']
+articles_collection = db['articles_collection']
 
 @app.route('/articles')
 def articles():
@@ -104,6 +105,12 @@ def get_destinies():
 def get_experiences():
     p = articles_collection.find({"category": "experiences"})
     return json_util.dumps(p), 200, JSON_HEADER
+
+
+@app.route('/clear_all_articles',methods=['DELETE'])
+def clear_all_articles():
+    db.drop_collection(articles_collection)
+    return '', 200
 
 
 if __name__ == '__main__':
