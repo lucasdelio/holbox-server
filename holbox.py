@@ -48,7 +48,7 @@ def article_by_id():
         if not id: return 'no id param', 400
         a = articles_collection.find_one( {'_id': ObjectId(id)} )
         if not a :
-            return '', 204 #204 no content
+            return '', 400
         return json_util.dumps(a), 200, JSON_HEADER
     if request.method == 'POST':
         try:
@@ -65,7 +65,7 @@ def article_by_id():
         result = articles_collection.delete_one( {'_id': ObjectId(id)} )
         if result.deleted_count > 0:
             return '', 200
-        return 'id not found', 204
+        return 'id not found', 400
     if request.method == 'PUT':   
         if not id:
             return 'no id param', 400
@@ -74,7 +74,7 @@ def article_by_id():
             return 'invalid article format', 400
         a = articles_collection.find_one( {'_id': ObjectId(id)} )
         if not a:
-            return 'id not found', 204
+            return 'id not found', 400
         article["date"] = a["date"] #preserve the old date
         articles_collection.replace_one( {'_id': ObjectId(id)} , article)
         return article, 200, JSON_HEADER
