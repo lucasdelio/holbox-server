@@ -87,7 +87,7 @@ def article_by_id():
 @app.route('/reload_from_mock',methods=['POST'])
 def clear_all_articles():
     db.drop_collection(articles_collection)
-    with open('mocked_articles.json') as json_file:
+    with open('mocked_articles.json', encoding='utf-8') as json_file:
         articles = json.load(json_file)
         articles_collection.insert_many(articles)
     return '', 200
