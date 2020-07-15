@@ -21,8 +21,8 @@ TOKEN_COOKIE_NAME = 'TOKEN_COOKIE_NAME'
 app = Flask(__name__)
 CORS(app)
 
-key = os.environ['KEY'] #read the key from environment variable
-ferne = Fernet(key)     #initialize fernet with the key
+#key = os.environ['KEY'] #read the key from environment variable
+#ferne = Fernet(key)     #initialize fernet with the key
 
 client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['holbox_database']
