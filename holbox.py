@@ -28,14 +28,16 @@ client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['holbox_database']
 articles_collection = db['articles_collection']
 
+ARTICLES_PROJECTION = {'_id': 1, 'thumbnail':1, 'date':1, 'title':1, 'category':1 }
+
 
 @app.route('/articles')
 def articles():
     category = request.args.get('category')
     if category:
-        p = articles_collection.find({"category": category})
+        p = articles_collection.find({"category": category}, ARTICLES_PROJECTION)
     else:
-        p = articles_collection.find()
+        p = articles_collection.find({}, ARTICLES_PROJECTION)
     return json_util.dumps(p), 200, JSON_HEADER
 
 
@@ -59,7 +61,7 @@ def article_by_id():
                 return 'invalid article format', 400
             article['date'] = str(datetime.utcnow())
             articles_collection.insert_one( article )
-            return article, 200
+            return '', 200
         except:
             return 'Invalid body, body must be a valid article', 400
     if request.method == 'DELETE':
