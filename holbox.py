@@ -45,6 +45,7 @@ def articles():
         p = articles_collection.find({CATEGORY: category}, ARTICLES_PROJECTION)
     else:
         p = articles_collection.find({}, ARTICLES_PROJECTION)
+    p = p.sort(DATE, -1) #reverse the array
     p = p[ (page)*page_size : (page+1)*page_size ] #pagination
     return json_util.dumps(p), 200, JSON_HEADER
 
