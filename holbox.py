@@ -18,6 +18,8 @@ JSON_HEADER = {'content-type':'application/json'}
 TTL_ = 24*60*60 #24 hs ttl for generated tokens
 TOKEN_COOKIE_NAME = 'TOKEN_COOKIE_NAME'
 
+PAGE_SIZE = 10
+
 app = Flask(__name__)
 CORS(app)
 
@@ -34,10 +36,14 @@ ARTICLES_PROJECTION = {'_id': 1, 'thumbnail':1, 'date':1, 'title':1, 'category':
 @app.route('/articles')
 def articles():
     category = request.args.get('category')
+    page = int(request.args.get('page') or 0)
+    page_size = int(request.args.get('page_size') or PAGE_SIZE)
+    #print(str(page)+' '+str(page_size))
     if category:
         p = articles_collection.find({"category": category}, ARTICLES_PROJECTION)
     else:
         p = articles_collection.find({}, ARTICLES_PROJECTION)
+    p = p[ (page)*page_size : (page+1)*page_size ] #pagination
     return json_util.dumps(p), 200, JSON_HEADER
 
 
@@ -54,7 +60,7 @@ def article_by_id():
         if not a :
             return '', 400
         return json_util.dumps(a), 200, JSON_HEADER
-    if request.method == 'POST':
+    if request.method == 'POST': #create a new article, passed in body
         try:
             article = json.loads( request.data.decode('utf8')  )
             if not isValidArticle(article):
