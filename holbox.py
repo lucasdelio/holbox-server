@@ -8,17 +8,20 @@ from cryptography.fernet import Fernet
 from bson.objectid import ObjectId
 import os
 
-MARKDOWN = "markdown"
-TITLE = "title"
-CATEGORY = "category"
-TAGS = "tags"
+MARKDOWN = 'markdown'
+TITLE = 'title'
+CATEGORY = 'category'
+TAGS = 'tags'
+THUMBNAIL = 'thumbnail'
+DATE = 'date'
+PAGE = 'page'
 
 GOOGLE_USER_INFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
 JSON_HEADER = {'content-type':'application/json'}
 TTL_ = 24*60*60 #24 hs ttl for generated tokens
 TOKEN_COOKIE_NAME = 'TOKEN_COOKIE_NAME'
-
-PAGE_SIZE = 10
+PAGE_SIZE = 'page_size'
+PAGE_SIZE_DEFAULT = 10
 
 app = Flask(__name__)
 CORS(app)
@@ -30,25 +33,24 @@ client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['holbox_database']
 articles_collection = db['articles_collection']
 
-ARTICLES_PROJECTION = {'_id': 1, 'thumbnail':1, 'date':1, 'title':1, 'category':1 }
+ARTICLES_PROJECTION = {'_id': 1, THUMBNAIL:1, DATE:1, TITLE:1, CATEGORY:1 }
 
 
 @app.route('/articles')
 def articles():
-    category = request.args.get('category')
-    page = int(request.args.get('page') or 0)
-    page_size = int(request.args.get('page_size') or PAGE_SIZE)
-    #print(str(page)+' '+str(page_size))
+    category = request.args.get(CATEGORY)
+    page = int(request.args.get(PAGE) or 0)
+    page_size = int(request.args.get(PAGE_SIZE) or PAGE_SIZE_DEFAULT)
     if category:
-        p = articles_collection.find({"category": category}, ARTICLES_PROJECTION)
+        p = articles_collection.find({CATEGORY: category}, ARTICLES_PROJECTION)
     else:
         p = articles_collection.find({}, ARTICLES_PROJECTION)
     p = p[ (page)*page_size : (page+1)*page_size ] #pagination
     return json_util.dumps(p), 200, JSON_HEADER
 
 
-def isValidArticle(a):
-    return a[MARKDOWN] and a[TITLE] and a[CATEGORY] and a[TAGS]
+def isValidArticle(a): #check the required attributes
+    return a[MARKDOWN] and a[TITLE] and a[CATEGORY] and a[THUMBNAIL]
 
 
 @app.route('/article', methods=['GET','POST','DELETE','PUT'])
@@ -65,7 +67,7 @@ def article_by_id():
             article = json.loads( request.data.decode('utf8')  )
             if not isValidArticle(article):
                 return 'invalid article format', 400
-            article['date'] = str(datetime.utcnow())
+            article[DATE] = str(datetime.utcnow())
             articles_collection.insert_one( article )
             return '', 200
         except:
@@ -85,7 +87,7 @@ def article_by_id():
         a = articles_collection.find_one( {'_id': ObjectId(id)} )
         if not a:
             return 'id not found', 400
-        article["date"] = a["date"] #preserve the old date
+        article[DATE] = a[DATE] #preserve the old date
         articles_collection.replace_one( {'_id': ObjectId(id)} , article)
         return article, 200, JSON_HEADER
 
