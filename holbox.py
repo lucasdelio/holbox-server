@@ -14,6 +14,7 @@ CATEGORY = 'category'
 TAGS = 'tags'
 THUMBNAIL = 'thumbnail'
 DATE = 'date'
+ID = 'id'
 PAGE = 'page'
 
 GOOGLE_USER_INFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
@@ -32,8 +33,10 @@ CORS(app)
 client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['holbox_database']
 articles_collection = db['articles_collection']
+articles_collection.create_index([(ID, pymongo.ASCENDING)], unique=True)
 
-ARTICLES_PROJECTION = {'_id': 1, THUMBNAIL:1, DATE:1, TITLE:1, CATEGORY:1 }
+ARTICLES_PROJECTION = {'_id': 0, ID:1, THUMBNAIL:1, DATE:1, TITLE:1, CATEGORY:1 }
+SINGLE_ARTICLE_PROJECTION = {'_id': 0, ID:1, THUMBNAIL:1, DATE:1, TITLE:1, CATEGORY:1,MARKDOWN:1 }
 
 
 @app.route('/articles')
@@ -51,15 +54,15 @@ def articles():
 
 
 def isValidArticle(a): #check the required attributes
-    return a[MARKDOWN] and a[TITLE] and a[CATEGORY] and a[THUMBNAIL]
+    return {MARKDOWN, TITLE, CATEGORY, THUMBNAIL} <= a.keys()
 
 
 @app.route('/article', methods=['GET','POST','DELETE','PUT'])
 def article_by_id():
-    id = request.args.get('id')
+    id = request.args.get(ID)
     if request.method == 'GET':   
         if not id: return 'no id param', 400
-        a = articles_collection.find_one( {'_id': ObjectId(id)} )
+        a = articles_collection.find_one( {ID: id}, SINGLE_ARTICLE_PROJECTION )
         if not a :
             return '', 400
         return json_util.dumps(a), 200, JSON_HEADER
@@ -67,15 +70,16 @@ def article_by_id():
         try:
             article = json.loads( request.data.decode('utf8')  )
             if not isValidArticle(article):
-                return 'invalid article format', 400
+                return 'invalid article format, missing some key', 400
             article[DATE] = str(datetime.utcnow())
+            article[ID] = article[TITLE].replace(" ","_")
             articles_collection.insert_one( article )
             return '', 200
         except:
             return 'Invalid body, body must be a valid article', 400
     if request.method == 'DELETE':
         if not id: return 'no id param', 400
-        result = articles_collection.delete_one( {'_id': ObjectId(id)} )
+        result = articles_collection.delete_one( {ID: id} )
         if result.deleted_count > 0:
             return '', 200
         return 'id not found', 400
@@ -84,12 +88,13 @@ def article_by_id():
             return 'no id param', 400
         article = json.loads( request.data.decode('utf8')  )
         if not isValidArticle(article):
-            return 'invalid article format', 400
-        a = articles_collection.find_one( {'_id': ObjectId(id)} )
+            return 'invalid article format, missing some key', 400
+        a = articles_collection.find_one( {ID: id}, SINGLE_ARTICLE_PROJECTION )
         if not a:
             return 'id not found', 400
         article[DATE] = a[DATE] #preserve the old date
-        articles_collection.replace_one( {'_id': ObjectId(id)} , article)
+        article[ID] = article[TITLE].replace(" ","_")
+        articles_collection.replace_one( {ID: id} , article)
         return article, 200, JSON_HEADER
 
 
