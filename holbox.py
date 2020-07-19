@@ -21,20 +21,32 @@ PAGE = 'page'
 GOOGLE_USER_INFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
 JSON_HEADER = {'content-type':'application/json'}
 TTL_ = 24*60*60 #24 hs ttl for generated tokens
-TOKEN_COOKIE_NAME = 'TOKEN_COOKIE_NAME'
 PAGE_SIZE = 'page_size'
 PAGE_SIZE_DEFAULT = 10
+ADMIN_TOKEN_COOKIE = 'ADMIN_TOKEN_COOKIE'
 
 app = Flask(__name__)
 CORS(app)
 
 #key = os.environ['KEY'] #read the key from environment variable
 #ferne = Fernet(key)     #initialize fernet with the key
+file = open('key.key', 'rb')
+key = file.read() # The key will be type bytes
+ferne = Fernet(key)
+file.close()
 
 client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['holbox_database']
 articles_collection = db['articles_collection']
 articles_collection.create_index([(ID, pymongo.ASCENDING)], unique=True)
+
+admins_collection = db['admins_collection']
+admins_collection.create_index([('email', pymongo.ASCENDING)], unique=True)
+try:
+    admins_collection.insert_one( {'email':'lucasdelio@gmail.com' } )
+    admins_collection.insert_one( {'email':'damiandelio@gmail.com' } )
+    admins_collection.insert_one( {'email':'holboxpics@gmail.com' } )
+except: pass
 
 ARTICLES_PROJECTION = {'_id': 0, ID:1, THUMBNAIL:1, DATE:1, TITLE:1, CATEGORY:1 }
 SINGLE_ARTICLE_PROJECTION = {'_id': 0, ID:1, THUMBNAIL:1, DATE:1, TITLE:1, CATEGORY:1,MARKDOWN:1 }
@@ -100,7 +112,7 @@ def article_by_id():
         if not a:
             return 'id not found', 400
         article[DATE] = a[DATE] #preserve the old date
-        article[ID] = article[TITLE].replace(" ","_")
+        article[ID] = convertTitleToId(article[TITLE])
         articles_collection.replace_one( {ID: id} , article)
         return article, 200, JSON_HEADER
 
@@ -113,6 +125,21 @@ def clear_all_articles():
         articles_collection.insert_many(articles)
     return '', 200
 
+
+@app.route("/login-admin", methods=['POST'])
+def loginSpark():
+    data = request.get_json() or request.form
+    accessToken = data.get('accessToken')
+    if not accessToken:
+        return 'missing accessToken',401
+    headers = {"Authorization": 'Bearer '+accessToken}
+    json = requests.post( GOOGLE_USER_INFO_URL, headers=headers).json()
+    email = json.get('email')
+    if not email or not admins_collection.find_one( {'email': email} ):
+        return '',401 #if there is no email, or the email is not admin
+    resp = make_response( json, 200 , JSON_HEADER )
+    resp.set_cookie(ADMIN_TOKEN_COOKIE, ferne.encrypt(b'asdf').decode('utf8'), max_age=TTL_) #expires in one day
+    return resp
 
 if __name__ == '__main__':
     app.run(debug=True)
