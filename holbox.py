@@ -61,7 +61,7 @@ def convertTitleToId(s):
     s = unidecode.unidecode(s) #remove accents
     s = s.lower()
     s = s.replace(" ","-")
-    s = s.replace(".","") #remove the dots
+    s = s.replace(".","").replace(",","").replace(";","").replace(":","")
     return s
 
 @app.route('/article', methods=['GET','POST','DELETE','PUT'])
