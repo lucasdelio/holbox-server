@@ -7,6 +7,7 @@ from flask_cors import CORS, cross_origin
 from cryptography.fernet import Fernet
 from bson.objectid import ObjectId
 import os
+import unidecode
 
 MARKDOWN = 'markdown'
 TITLE = 'title'
@@ -56,6 +57,12 @@ def articles():
 def isValidArticle(a): #check the required attributes
     return {MARKDOWN, TITLE, CATEGORY, THUMBNAIL} <= a.keys()
 
+def convertTitleToId(s):
+    s = unidecode.unidecode(s) #remove accents
+    s = s.lower()
+    s = s.replace(" ","-")
+    s = s.replace(".","") #remove the dots
+    return s
 
 @app.route('/article', methods=['GET','POST','DELETE','PUT'])
 def article_by_id():
@@ -72,7 +79,7 @@ def article_by_id():
             if not isValidArticle(article):
                 return 'invalid article format, missing some key', 400
             article[DATE] = str(datetime.utcnow())
-            article[ID] = article[TITLE].replace(" ","_")
+            article[ID] = convertTitleToId(article[TITLE])
             articles_collection.insert_one( article )
             return '', 200
         except:
