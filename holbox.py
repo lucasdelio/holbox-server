@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 import pymongo
 from bson import json_util
 import json
@@ -8,6 +8,7 @@ from cryptography.fernet import Fernet
 from bson.objectid import ObjectId
 import os
 import unidecode
+import requests
 
 MARKDOWN = 'markdown'
 TITLE = 'title'
@@ -67,7 +68,9 @@ def articles():
 
 
 def isValidArticle(a): #check the required attributes
-    return {MARKDOWN, TITLE, CATEGORY, THUMBNAIL} <= a.keys()
+    if not {MARKDOWN, TITLE, CATEGORY, THUMBNAIL} <= a.keys():
+        return false
+    return len(a[TITLE]) > 0
 
 def convertTitleToId(s):
     s = unidecode.unidecode(s) #remove accents
