@@ -25,6 +25,7 @@ TTL_ = 24*60*60 #24 hs ttl for generated tokens
 PAGE_SIZE = 'page_size'
 PAGE_SIZE_DEFAULT = 10
 ADMIN_TOKEN_COOKIE = 'ADMIN_TOKEN_COOKIE'
+TOKEN = 'token'
 
 app = Flask(__name__)
 CORS(app)
@@ -79,15 +80,27 @@ def convertTitleToId(s):
     s = s.replace(".","").replace(",","").replace(";","").replace(":","")
     return s
 
+def isAuthenticated(request):
+    token = request.headers.get(TOKEN)
+    try:
+        ferne.decrypt( bytes(token, 'utf8'), ttl= TTL_ )
+    except:
+        return False
+    return True
+
 @app.route('/article', methods=['GET','POST','DELETE','PUT'])
 def article_by_id():
     id = request.args.get(ID)
-    if request.method == 'GET':   
+    if request.method == 'GET':
         if not id: return 'no id param', 400
         a = articles_collection.find_one( {ID: id}, SINGLE_ARTICLE_PROJECTION )
         if not a :
             return '', 400
         return json_util.dumps(a), 200, JSON_HEADER
+
+    if not isAuthenticated(request):
+            return '', 401
+
     if request.method == 'POST': #create a new article, passed in body
         try:
             article = json.loads( request.data.decode('utf8')  )
@@ -105,10 +118,8 @@ def article_by_id():
         if result.deleted_count > 0:
             return '', 200
         return 'id not found', 400
-    if request.method == 'PUT':   
-        if not id:
-            return 'no id param', 400
-        article = json.loads( request.data.decode('utf8')  )
+    if request.method == 'PUT':
+        if not id: return 'no id param', 400
         if not isValidArticle(article):
             return 'invalid article format, missing some key', 400
         a = articles_collection.find_one( {ID: id}, SINGLE_ARTICLE_PROJECTION )
@@ -120,13 +131,13 @@ def article_by_id():
         return article, 200, JSON_HEADER
 
 
-@app.route('/reload_from_mock',methods=['POST'])
+""" @app.route('/reload_from_mock',methods=['POST'])
 def clear_all_articles():
     db.drop_collection(articles_collection)
     with open('mocked_articles.json', encoding='utf-8') as json_file:
         articles = json.load(json_file)
         articles_collection.insert_many(articles)
-    return '', 200
+    return '', 200 """
 
 
 @app.route("/login-admin", methods=['POST'])
@@ -140,9 +151,8 @@ def loginSpark():
     email = json.get('email')
     if not email or not admins_collection.find_one( {'email': email} ):
         return '',401 #if there is no email, or the email is not admin
-    resp = make_response( json, 200 , JSON_HEADER )
-    resp.set_cookie(ADMIN_TOKEN_COOKIE, ferne.encrypt(b'asdf').decode('utf8'), max_age=TTL_) #expires in one day
-    return resp
+    return ferne.encrypt(b'asdf').decode('utf8'), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
